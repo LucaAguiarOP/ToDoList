@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:todolistflutter/data.dart';
 import 'package:todolistflutter/todo_tile.dart';
 import 'package:todolistflutter/dialog_box.dart';
+import 'package:hive/hive.dart';
 
 
 class HomePage extends StatefulWidget {
@@ -12,33 +14,56 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
 
+  final _myBox = Hive.box('mybox');
+
+  final bd = TodoDataBase();
+
   final _controller = TextEditingController();
 
-List toDoList = [
-  ["trabalhar pela manha", false],
-  ["123", false]
-];
+
+
+@override
+void initState() {
+
+  if (_myBox.get("TODOLIST") == null) {
+    bd.createInitialData();
+  } else {
+    bd.loadData();
+  }
+
+   super.initState();
+
+}
+
+
+
+
+
+
+
 
 void checkboxChanged(bool? value, int index) {
   setState(() {
-    toDoList[index][1] = !toDoList[index][1];
+    bd.toDoList[index][1] = !bd.toDoList[index][1];
   });
+  bd.updateDataBase();
 }
 
 
 void saveNewTask() {
   setState(() {
-    toDoList.add([ _controller.text, false]);
+    bd.toDoList.add([ _controller.text, false]);
     _controller.clear();
   });
   Navigator.of(context).pop();
+  bd.updateDataBase();
 }
 
 void deleteTask(int index) {
   setState(() {
-    toDoList.removeAt(index);
+    bd.toDoList.removeAt(index);
   });
-
+bd.updateDataBase();
 }
 
 
@@ -73,11 +98,11 @@ void createNewTask() {
         child: Icon(Icons.add),
       ),
       body: ListView.builder( 
-        itemCount: toDoList.length,
+        itemCount: bd.toDoList.length,
         itemBuilder: (context, index) {
           return ToDoTile(
-            taskName: toDoList[index][0],
-            taskCompleted: toDoList[index][1],
+            taskName: bd.toDoList[index][0],
+            taskCompleted: bd.toDoList[index][1],
             onChanged: (value) => checkboxChanged(value, index),
             deleteFuction: (context) => deleteTask(index)
         
